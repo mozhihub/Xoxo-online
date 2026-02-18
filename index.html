@@ -4,79 +4,282 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pro XOX Multiplayer</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
             --board-bg: #0f172a; --x-color: #ef4444; --o-color: #22c55e;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .screen { display: none; flex-direction: column; align-items: center; width: 90%; max-width: 400px; background: var(--card); padding: 20px; border-radius: 20px; text-align: center; position: relative; }
-        .active { display: flex; }
         
-        /* 3 Dot Menu */
-        .menu-dots { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.5rem; display: none; }
-        .settings-panel { position: absolute; top: 50px; right: 10px; background: #334155; padding: 15px; border-radius: 12px; display: none; z-index: 100; width: 200px; text-align: left; }
+        /* Screens */
+        .screen { display: none; flex-direction: column; align-items: center; width: 90%; max-width: 400px; background: var(--card); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; position: relative; }
+        .active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        /* Menu & Settings */
+        .header-icons { position: absolute; top: 15px; right: 20px; display: none; gap: 15px; z-index: 100; }
+        .icon-btn { cursor: pointer; font-size: 1.5rem; user-select: none; }
+        .settings-panel { position: absolute; top: 55px; right: 10px; background: #334155; padding: 15px; border-radius: 15px; display: none; z-index: 110; width: 240px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); text-align: left; }
         
         /* Customization Scrollers */
-        .scroll-container { display: flex; overflow-x: auto; width: 100%; gap: 10px; padding: 10px 0; scrollbar-width: none; }
-        .color-dot { min-width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid white; }
-        .coin-opt { min-width: 45px; height: 45px; background: #0f172a; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #38bdf8; font-weight: bold; }
+        .scroll-container { display: flex; overflow-x: auto; width: 100%; gap: 10px; padding: 10px 0; -webkit-overflow-scrolling: touch; }
+        .scroll-container::-webkit-scrollbar { display: none; }
+        .color-dot { min-width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(255,255,255,0.3); }
+        .coin-opt { min-width: 50px; height: 50px; background: #0f172a; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid var(--accent); font-size: 1.2rem; }
 
-        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin: 15px 0; background: var(--board-bg); padding: 10px; border-radius: 15px; }
-        .cell { aspect-ratio: 1/1; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 2.2rem; font-weight: bold; cursor: pointer; }
+        /* Game Elements */
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin: 20px 0; background: var(--board-bg); padding: 12px; border-radius: 15px; transition: 0.3s; }
+        .cell { aspect-ratio: 1/1; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .cell:active { transform: scale(0.9); }
         
-        .btn { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-p { background: var(--accent); color: #000; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: none; text-align: center; }
+        .btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        .btn-p { background: var(--accent); color: #0f172a; }
+        .btn-s { background: #334155; color: white; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 2px solid #334155; background: #0f172a; color: white; text-align: center; font-size: 1.2rem; box-sizing: border-box; }
         
-        /* Pop-up Overlay */
-        #game-info-pop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 200; }
+        #status { font-size: 1.2rem; font-weight: bold; margin: 10px 0; color: var(--accent); }
+
+        /* Pop-up */
+        .pop-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 200; }
+        .pop-box { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; width: 80%; max-width: 300px; }
     </style>
 </head>
 <body>
 
     <div id="menu-screen" class="screen active">
         <h1>XOX PRO</h1>
-        <button class="btn btn-p" onclick="hostGame()">Host Game</button>
-        <button class="btn" style="background:#334155; color:white;" onclick="showJoin()">Join Game</button>
+        <button class="btn btn-p" onclick="window.hostGame()">Host Game</button>
+        <button class="btn btn-s" onclick="window.showJoin()">Join Game</button>
     </div>
 
     <div id="join-screen" class="screen">
         <h2>Join Match</h2>
-        <input type="text" id="join-input" placeholder="6-Digit Code" maxlength="6">
-        <button class="btn btn-p" onclick="joinGame()">Join Now</button>
+        <input type="text" id="join-input" placeholder="Enter 6-Digit Code" maxlength="6">
+        <button class="btn btn-p" onclick="window.joinGame()">Join Now</button>
+        <button class="btn btn-s" onclick="window.showMenu()">Back</button>
     </div>
 
     <div id="game-screen" class="screen">
-        <div class="menu-dots" id="dots" onclick="toggleSettings()">⋮</div>
+        <div class="header-icons" id="game-icons">
+            <span class="icon-btn" onclick="window.toggleSettings()">⚙️</span>
+        </div>
+
         <div class="settings-panel" id="settings">
-            <div>🔊 Sound: <button onclick="toggleSound()" id="sound-btn">ON</button></div>
-            <hr>
-            <div>Board Color:</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>🔊 Game Sound</span>
+                <button onclick="window.toggleSound()" id="sound-btn" style="padding:5px 10px; border-radius:5px;">ON</button>
+            </div>
+            <hr style="opacity:0.2; margin:15px 0;">
+            <div style="font-size:0.9rem; margin-bottom:5px;">Board Color (10)</div>
             <div class="scroll-container" id="board-colors"></div>
-            <div>Coin Style:</div>
+            <div style="font-size:0.9rem; margin-top:10px; margin-bottom:5px;">Coin Styles (20)</div>
             <div class="scroll-container" id="coin-styles"></div>
         </div>
 
-        <div id="status">Waiting...</div>
+        <div class="room-info" style="font-size:0.8rem; opacity:0.6;">ROOM: <span id="display-room-id">...</span></div>
+        <div id="status">Waiting for opponent...</div>
+        
         <div class="board" id="board">
             <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
             <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
             <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
         </div>
-        <button class="btn btn-p" id="share-btn">Share Game Link</button>
+        
+        <button class="btn btn-p" id="share-btn" onclick="window.shareLink()">Share Game Link</button>
     </div>
 
-    <div id="game-info-pop">
-        <div style="background:var(--card); padding:30px; border-radius:20px; text-align:center;">
-            <h2 id="pop-title">Welcome!</h2>
-            <p id="pop-desc">Share link to invite friend.</p>
-            <button class="btn btn-p" onclick="closePop()">Start</button>
+    <div id="game-info-pop" class="pop-overlay">
+        <div class="pop-box">
+            <h2 id="pop-title">Match Created!</h2>
+            <p style="font-size:0.9rem; opacity:0.8;">Share the link with your friend. Once they join, you can customize the game!</p>
+            <button class="btn btn-p" onclick="window.closePop()">Got it!</button>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="script.js"></script>
+    <script>
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLyf_dz6xPC9wdthZSVtpatkc8JgFhE4Q",
+            authDomain: "chatbox-chats.firebaseapp.com",
+            projectId: "chatbox-chats",
+            databaseURL: "https://chatbox-chats-default-rtdb.firebaseio.com",
+            appId: "1:10200860576:web:262315d86f6d1732ddc6c5"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let roomId, myRole, gameRef, soundOn = true;
+        let board = Array(9).fill("");
+        
+        const colors = ['#0f172a', '#4c1d95', '#1e3a8a', '#064e3b', '#78350f', '#450a0a', '#1e1b4b', '#0f766e', '#be123c', '#334155'];
+        const coins = ['X/O', '🔥/❄️', '👑/💎', '🍎/🍊', '👻/💀', '⚽/🏀', '❤️/💙', '⭐/🌙', '⚡/🌊', '🐱/🐶', '🎮/🕹️', '🎸/🥁', '🚀/🛸', '🍕/🍔', '🍦/🍩', '🦊/🦁', '🐼/🐨', '🌻/🌹', '🌈/☁️', '🌞/🌛'];
+        let currentCoinSet = ["X", "O"];
+
+        // AUDIO
+        const clickSound = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
+        const winSound = new Audio('https://actions.google.com/sounds/v1/cartoon/clime_up_the_ladder.ogg');
+
+        // NAVIGATION & UI
+        window.showMenu = () => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('menu-screen').classList.add('active');
+        };
+
+        window.showJoin = () => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('join-screen').classList.add('active');
+        };
+
+        window.toggleSettings = () => {
+            const s = document.getElementById('settings');
+            s.style.display = s.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.toggleSound = () => {
+            soundOn = !soundOn;
+            document.getElementById('sound-btn').innerText = soundOn ? "ON" : "OFF";
+        };
+
+        window.closePop = () => { document.getElementById('game-info-pop').style.display = 'none'; };
+
+        // HOST GAME
+        window.hostGame = async function() {
+            roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            myRole = "X";
+            gameRef = db.ref('rooms/' + roomId);
+            
+            await gameRef.set({
+                board: board,
+                turn: "X",
+                players: 1,
+                config: { color: colors[0], coinIdx: 0 }
+            });
+            
+            initGame();
+            document.getElementById('game-info-pop').style.display = 'flex';
+        };
+
+        // JOIN GAME
+        window.joinGame = async function() {
+            const input = document.getElementById('join-input').value.toUpperCase();
+            if (input.length !== 6) return alert("Enter 6 digit code");
+            
+            roomId = input;
+            gameRef = db.ref('rooms/' + roomId);
+            const snap = await gameRef.once('value');
+            
+            if (snap.exists() && snap.val().players < 2) {
+                myRole = "O";
+                await gameRef.update({ players: 2 });
+                initGame();
+            } else {
+                alert("Room Full or Not Found!");
+            }
+        };
+
+        // GAME INITIALIZATION
+        function initGame() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('game-screen').classList.add('active');
+            document.getElementById('display-room-id').innerText = roomId;
+
+            gameRef.on('value', snap => {
+                const data = snap.val();
+                if (!data) return;
+                
+                board = data.board;
+                currentCoinSet = coins[data.config.coinIdx].split('/');
+                document.body.style.setProperty('--board-bg', data.config.color);
+                
+                if (data.players >= 2) {
+                    document.getElementById('share-btn').style.display = 'none';
+                    document.getElementById('game-icons').style.display = 'flex';
+                }
+
+                const win = checkWinner();
+                if (win) {
+                    if (soundOn) winSound.play();
+                    document.getElementById('status').innerText = win === "Draw" ? "Game Draw! Restarting..." : `${win === "X" ? currentCoinSet[0] : currentCoinSet[1]} Wins! Restarting...`;
+                    setTimeout(() => gameRef.update({ board: Array(9).fill(""), turn: "X" }), 3000);
+                } else {
+                    document.getElementById('status').innerText = data.players < 2 ? "Waiting for Friend..." : (data.turn === myRole ? "Your Turn!" : "Friend's Turn...");
+                }
+                renderBoard();
+            });
+        }
+
+        function renderBoard() {
+            document.querySelectorAll('.cell').forEach((cell, i) => {
+                const val = board[i];
+                cell.innerText = val === "X" ? currentCoinSet[0] : (val === "O" ? currentCoinSet[1] : "");
+                cell.style.color = val === "X" ? "var(--x-color)" : "var(--o-color)";
+            });
+        }
+
+        // CELL CLICK
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.onclick = () => {
+                const i = cell.dataset.index;
+                gameRef.once('value', snap => {
+                    const d = snap.val();
+                    if (d.players === 2 && d.turn === myRole && board[i] === "" && !checkWinner()) {
+                        if (soundOn) clickSound.play();
+                        board[i] = myRole;
+                        gameRef.update({ board: board, turn: myRole === "X" ? "O" : "X" });
+                    }
+                });
+            };
+        });
+
+        // SHARE LINK
+        window.shareLink = () => {
+            const url = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            if (navigator.share) {
+                navigator.share({ title: 'Join my XOX Match', url: url });
+            } else {
+                navigator.clipboard.writeText(url);
+                alert("Link Copied!");
+            }
+        };
+
+        // CUSTOMIZATION GENERATORS
+        colors.forEach(c => {
+            const d = document.createElement('div');
+            d.className = 'color-dot';
+            d.style.background = c;
+            d.onclick = () => gameRef.update({ "config/color": c });
+            document.getElementById('board-colors').appendChild(d);
+        });
+
+        coins.forEach((c, i) => {
+            const d = document.createElement('div');
+            d.className = 'coin-opt';
+            d.innerText = c;
+            d.onclick = () => gameRef.update({ "config/coinIdx": i });
+            document.getElementById('coin-styles').appendChild(d);
+        });
+
+        function checkWinner() {
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let [a,b,c] of lines) {
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+            }
+            return board.includes("") ? null : "Draw";
+        }
+
+        // AUTO-JOIN
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            const r = params.get('room');
+            if (r) {
+                document.getElementById('join-input').value = r;
+                window.showJoin();
+            }
+        };
+    </script>
 </body>
 </html>
