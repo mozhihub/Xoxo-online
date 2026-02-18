@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XOX Multiplayer Mobile</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --x-color: #ef4444;
+            --o-color: #22c55e;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: white;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .active { display: flex; }
+        
+        h1 { font-size: 2rem; margin-bottom: 20px; color: var(--accent); }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-secondary { background: #334155; color: white; }
+        
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border: 2px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        /* Game Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .cell {
+            aspect-ratio: 1/1;
+            background: #0f172a;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .cell.x { color: var(--x-color); }
+        .cell.o { color: var(--o-color); }
+
+        #status { font-size: 1.1rem; margin-bottom: 10px; font-weight: 500; }
+        .room-info { font-size: 0.9rem; opacity: 0.7; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen" class="screen active">
+        <h1>XOX Online</h1>
+        <button class="btn btn-primary" onclick="hostGame()">Host Game</button>
+        <button class="btn btn-secondary" onclick="showJoinScreen()">Join Game</button>
+    </div>
+
+    <div id="join-screen" class="screen">
+        <h1>Join Game</h1>
+        <input type="text" id="join-input" placeholder="Enter 6-digit code" maxlength="6">
+        <button class="btn btn-primary" onclick="joinGame()">Join Now</button>
+        <button class="btn btn-secondary" onclick="showMenu()">Back</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="room-info">Room ID: <b id="display-room-id">...</b></div>
+        <div id="status">Waiting for opponent...</div>
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <button class="btn btn-primary" id="share-btn">Share Link</button>
+        <button class="btn btn-secondary" onclick="location.reload()">Exit</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
