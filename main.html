@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XOX Pro Max: Full Fixed</title>
+    <title>XOX Pro Max: Fixed & Polished</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -25,9 +25,10 @@
         .p-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
         .win-tag { font-size: 0.7rem; color: #888; }
 
-        /* Board */
-        .board { display: grid; gap: 8px; width: 100%; aspect-ratio: 1/1; background: var(--board-color, #0b0e14); padding: 10px; border-radius: 20px; box-sizing: border-box; transition: 0.4s; }
-        .cell { aspect-ratio: 1/1; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
+        /* Board Fix: Clearer lines for both players */
+        .board { display: grid; gap: 8px; width: 100%; aspect-ratio: 1/1; background: var(--board-color, #1a1f29); padding: 10px; border-radius: 20px; box-sizing: border-box; transition: 0.4s; border: 2px solid rgba(255,255,255,0.1); }
+        .cell { aspect-ratio: 1/1; background: rgba(0,0,0,0.3); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); transition: 0.2s; }
+        .cell:active { background: rgba(255,255,255,0.1); }
 
         /* Settings Overlay */
         .settings-panel { position: absolute; top: 60px; right: 20px; background: #1a1f29; padding: 15px; border-radius: 20px; display: none; z-index: 100; border: 1px solid var(--accent); width: 260px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 70vh; overflow-y: auto; }
@@ -38,6 +39,9 @@
         .btn { width: 100%; padding: 14px; border: none; border-radius: 16px; cursor: pointer; font-weight: bold; margin-top: 8px; }
         .btn-p { background: var(--accent); color: #0b0e14; }
         .btn-s { background: #252b38; color: white; }
+        
+        /* Invite Button Hide Class */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body onclick="window.initAudio()">
@@ -50,7 +54,7 @@
 
     <div id="join-screen" class="screen">
         <h2>Join Match</h2>
-        <input type="text" id="join-input" placeholder="Enter Code" maxlength="6" style="width:80%; padding:15px; border-radius:12px; background:#0b0e14; color:white; border:2px solid #252b38; text-align:center; font-size:1.2rem; margin-bottom:15px;">
+        <input type="text" id="join-input" placeholder="Enter Code" maxlength="6" style="width:80%; padding:15px; border-radius:12px; background:#0b0e14; color:white; border:2px solid #252b38; text-align:center; font-size:1.2rem; margin-bottom:15px; outline:none; border-color:var(--accent);">
         <button class="btn btn-p" onclick="window.joinGame()">Connect</button>
         <button class="btn btn-s" onclick="window.showMenu()">Back</button>
     </div>
@@ -64,18 +68,18 @@
         <div class="settings-panel" id="settings">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span>🔊 Sound</span>
-                <button onclick="window.toggleSound()" id="s-btn" style="padding:5px 10px; border-radius:5px; border:none; background:var(--accent);">ON</button>
+                <button onclick="window.toggleSound()" id="s-btn" style="padding:5px 10px; border-radius:5px; border:none; background:var(--accent); font-weight:bold;">ON</button>
             </div>
-            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Grid Mode:</p>
-            <div style="display:flex; gap:5px;">
-                <button class="btn btn-s" style="padding:8px" onclick="window.setGrid(3)">3x3</button>
-                <button class="btn btn-s" style="padding:8px" onclick="window.setGrid(5)">5x5</button>
-                <button class="btn btn-s" style="padding:8px" onclick="window.setGrid(8)">8x8</button>
-            </div>
-            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Board Color:</p>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Board Theme:</p>
             <div class="scroll-row" id="color-row"></div>
             <p style="font-size:0.8rem; margin:15px 0 5px 0;">Coin Set:</p>
             <div class="scroll-row" id="coin-row"></div>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Grid Mode:</p>
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(3)">3x3</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(5)">5x5</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(8)">8x8</button>
+            </div>
         </div>
 
         <div class="players-bar">
@@ -89,7 +93,7 @@
             </div>
         </div>
 
-        <div id="status" style="font-weight:bold; margin-bottom:10px;">Waiting...</div>
+        <div id="status" style="font-weight:bold; margin-bottom:12px; color:var(--accent);">Waiting...</div>
         <div class="board" id="board"></div>
         <button class="btn btn-p" id="invite-btn" onclick="window.share()">Copy Invite Link</button>
     </div>
@@ -106,7 +110,7 @@
         const db = firebase.database();
 
         let roomId, myRole, gRef, sound = true, aud = false;
-        const colors = ['#0b0e14', '#2d1b4d', '#1b2d4d', '#1b4d3e', '#4d3a1b', '#4d1b1b', '#222'];
+        const colors = ['#1a1f29', '#2d1b4d', '#1b2d4d', '#1b4d3e', '#4d3a1b', '#4d1b1b', '#000000'];
         const coins = ['X/O', '❤️/💙', '🔥/❄️', '👑/💎', '🍎/🍊', '👻/💀', '⚽/🏀', '⭐/🌙', '⚡/🌊', '🐱/🐶', '🎮/🕹️', '🎸/🥁', '🚀/🛸', '🍕/🍔', '🍦/🍩', '🦊/🦁', '🐼/🐨', '🌻/🌹', '🌈/☁️', '🌞/🌛'];
         
         const sndPop = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
@@ -129,10 +133,10 @@
         window.hostGame = async () => {
             roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
             myRole = 'X';
-            gRef = db.ref('final_v2/' + roomId);
+            gRef = db.ref('final_v3/' + roomId);
             await gRef.set({
                 grid: 3, board: Array(9).fill(""), turn: "X", players: 1,
-                names: { X: "Host", O: "Player O" },
+                names: { X: "Host", O: "Joiner" },
                 wins: { X: 0, O: 0 },
                 conf: { bg: colors[0], cIdx: 0 }
             });
@@ -141,7 +145,7 @@
 
         window.joinGame = async () => {
             roomId = document.getElementById('join-input').value.toUpperCase();
-            gRef = db.ref('final_v2/' + roomId);
+            gRef = db.ref('final_v3/' + roomId);
             const snap = await gRef.once('value');
             if (snap.exists() && snap.val().players < 2) {
                 myRole = 'O';
@@ -167,8 +171,15 @@
                 document.getElementById('disp-nO').innerText = d.names.O;
                 document.getElementById('wX').innerText = d.wins.X;
                 document.getElementById('wO').innerText = d.wins.O;
-                document.body.style.setProperty('--board-color', d.conf.bg);
+                document.getElementById('board').style.setProperty('--board-color', d.conf.bg);
                 
+                // HIDE INVITE BUTTON IF 2 PLAYERS ARE IN
+                if (d.players >= 2) {
+                    document.getElementById('invite-btn').classList.add('hidden');
+                } else {
+                    document.getElementById('invite-btn').classList.remove('hidden');
+                }
+
                 const curCoins = coins[d.conf.cIdx].split('/');
                 const win = check(d.board, d.grid);
                 render(d.board, d.grid, curCoins);
@@ -186,7 +197,7 @@
                         }, 2500);
                     }
                 } else {
-                    document.getElementById('status').innerText = d.players < 2 ? "Waiting..." : (d.turn === myRole ? "Your Turn" : d.names[d.turn] + "'s Turn");
+                    document.getElementById('status').innerText = d.players < 2 ? "Waiting for Friend..." : (d.turn === myRole ? "Your Turn" : d.names[d.turn] + "'s Turn");
                 }
             });
         }
@@ -247,7 +258,12 @@
 
         window.share = () => {
             const u = window.location.origin + window.location.pathname + "?room=" + roomId;
-            navigator.clipboard.writeText(u); alert("Copied!");
+            navigator.clipboard.writeText(u); alert("Link Copied! Send to friend.");
+        };
+        
+        window.onload = () => {
+            const r = new URLSearchParams(window.location.search).get('room');
+            if (r) { document.getElementById('join-input').value = r; window.showJoin(); }
         };
     </script>
 </body>
