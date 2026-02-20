@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XOX Pro Max: Full Fixed</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --bg: #0b0e14; --card: #1a1f29; --accent: #00d2ff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        
+        .screen { display: none; flex-direction: column; align-items: center; width: 95%; max-width: 420px; background: var(--card); padding: 20px; border-radius: 24px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .active { display: flex; }
+
+        /* Header Alignment */
+        .game-header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
+        .room-tag { font-size: 0.8rem; font-weight: bold; color: var(--accent); }
+        .settings-icon { font-size: 1.5rem; cursor: pointer; }
+
+        /* Players Bar */
+        .players-bar { display: flex; justify-content: space-between; width: 100%; gap: 10px; margin-bottom: 15px; }
+        .player-box { background: #252b38; padding: 12px; border-radius: 16px; flex: 1; border: 2px solid transparent; cursor: pointer; text-align: center; }
+        .active-turn { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,210,255,0.2); }
+        .p-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
+        .win-tag { font-size: 0.7rem; color: #888; }
+
+        /* Board */
+        .board { display: grid; gap: 8px; width: 100%; aspect-ratio: 1/1; background: var(--board-color, #0b0e14); padding: 10px; border-radius: 20px; box-sizing: border-box; transition: 0.4s; }
+        .cell { aspect-ratio: 1/1; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* Settings Overlay */
+        .settings-panel { position: absolute; top: 60px; right: 20px; background: #1a1f29; padding: 15px; border-radius: 20px; display: none; z-index: 100; border: 1px solid var(--accent); width: 260px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 70vh; overflow-y: auto; }
+        .scroll-row { display: flex; overflow-x: auto; gap: 8px; padding: 10px 0; scrollbar-width: none; }
+        .dot { min-width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; }
+        .opt { min-width: 50px; height: 50px; background: #0b0e14; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid #444; font-size: 1.2rem; }
+
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 16px; cursor: pointer; font-weight: bold; margin-top: 8px; }
+        .btn-p { background: var(--accent); color: #0b0e14; }
+        .btn-s { background: #252b38; color: white; }
+    </style>
+</head>
+<body onclick="window.initAudio()">
+
+    <div id="menu-screen" class="screen active">
+        <h1>XOX PRO MAX</h1>
+        <button class="btn btn-p" onclick="window.hostGame()">Host Match</button>
+        <button class="btn btn-s" onclick="window.showJoin()">Join Friend</button>
+    </div>
+
+    <div id="join-screen" class="screen">
+        <h2>Join Match</h2>
+        <input type="text" id="join-input" placeholder="Enter Code" maxlength="6" style="width:80%; padding:15px; border-radius:12px; background:#0b0e14; color:white; border:2px solid #252b38; text-align:center; font-size:1.2rem; margin-bottom:15px;">
+        <button class="btn btn-p" onclick="window.joinGame()">Connect</button>
+        <button class="btn btn-s" onclick="window.showMenu()">Back</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <span id="room-id" class="room-tag">ROOM: ----</span>
+            <span class="settings-icon" onclick="window.toggleSettings()">⚙️</span>
+        </div>
+
+        <div class="settings-panel" id="settings">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>🔊 Sound</span>
+                <button onclick="window.toggleSound()" id="s-btn" style="padding:5px 10px; border-radius:5px; border:none; background:var(--accent);">ON</button>
+            </div>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Grid Mode:</p>
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-s" style="padding:8px" onclick="window.setGrid(3)">3x3</button>
+                <button class="btn btn-s" style="padding:8px" onclick="window.setGrid(5)">5x5</button>
+                <button class="btn btn-s" style="padding:8px" onclick="window.setGrid(8)">8x8</button>
+            </div>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Board Color:</p>
+            <div class="scroll-row" id="color-row"></div>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Coin Set:</p>
+            <div class="scroll-row" id="coin-row"></div>
+        </div>
+
+        <div class="players-bar">
+            <div class="player-box" id="pX-box" onclick="window.openNamePopup('X')">
+                <div id="disp-nX" class="p-name">Player X</div>
+                <div class="win-tag">Wins: <span id="wX">0</span></div>
+            </div>
+            <div class="player-box" id="pO-box" onclick="window.openNamePopup('O')">
+                <div id="disp-nO" class="p-name">Player O</div>
+                <div class="win-tag">Wins: <span id="wO">0</span></div>
+            </div>
+        </div>
+
+        <div id="status" style="font-weight:bold; margin-bottom:10px;">Waiting...</div>
+        <div class="board" id="board"></div>
+        <button class="btn btn-p" id="invite-btn" onclick="window.share()">Copy Invite Link</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLyf_dz6xPC9wdthZSVtpatkc8JgFhE4Q",
+            authDomain: "chatbox-chats.firebaseapp.com",
+            projectId: "chatbox-chats",
+            databaseURL: "https://chatbox-chats-default-rtdb.firebaseio.com",
+            appId: "1:10200860576:web:262315d86f6d1732ddc6c5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let roomId, myRole, gRef, sound = true, aud = false;
+        const colors = ['#0b0e14', '#2d1b4d', '#1b2d4d', '#1b4d3e', '#4d3a1b', '#4d1b1b', '#222'];
+        const coins = ['X/O', '❤️/💙', '🔥/❄️', '👑/💎', '🍎/🍊', '👻/💀', '⚽/🏀', '⭐/🌙', '⚡/🌊', '🐱/🐶', '🎮/🕹️', '🎸/🥁', '🚀/🛸', '🍕/🍔', '🍦/🍩', '🦊/🦁', '🐼/🐨', '🌻/🌹', '🌈/☁️', '🌞/🌛'];
+        
+        const sndPop = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
+        const sndWin = new Audio('https://actions.google.com/sounds/v1/cartoon/clime_up_the_ladder.ogg');
+        const sndDraw = new Audio('https://actions.google.com/sounds/v1/cartoon/glitch_error.ogg');
+
+        window.initAudio = () => { aud = true; };
+        window.showMenu = () => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('menu-screen').classList.add('active'); };
+        window.showJoin = () => { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('join-screen').classList.add('active'); };
+        window.toggleSettings = () => { const s = document.getElementById('settings'); s.style.display = s.style.display === 'block' ? 'none' : 'block'; };
+        window.toggleSound = () => { sound = !sound; document.getElementById('s-btn').innerText = sound ? "ON" : "OFF"; };
+
+        window.openNamePopup = (role) => {
+            if (myRole === role) {
+                const n = prompt("Enter Name:", "");
+                if (n) gRef.child('names').update({ [role]: n.substring(0, 10) });
+            } else alert("Change only your name!");
+        };
+
+        window.hostGame = async () => {
+            roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            myRole = 'X';
+            gRef = db.ref('final_v2/' + roomId);
+            await gRef.set({
+                grid: 3, board: Array(9).fill(""), turn: "X", players: 1,
+                names: { X: "Host", O: "Player O" },
+                wins: { X: 0, O: 0 },
+                conf: { bg: colors[0], cIdx: 0 }
+            });
+            start();
+        };
+
+        window.joinGame = async () => {
+            roomId = document.getElementById('join-input').value.toUpperCase();
+            gRef = db.ref('final_v2/' + roomId);
+            const snap = await gRef.once('value');
+            if (snap.exists() && snap.val().players < 2) {
+                myRole = 'O';
+                await gRef.update({ players: 2 });
+                start();
+            } else alert("Invalid Room!");
+        };
+
+        window.setGrid = (s) => gRef.update({ grid: s, board: Array(s*s).fill(""), turn: "X" });
+        window.setBg = (c) => gRef.child('conf').update({ bg: c });
+        window.setCoin = (i) => gRef.child('conf').update({ cIdx: i });
+
+        function start() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('game-screen').classList.add('active');
+            document.getElementById('room-id').innerText = "ROOM: " + roomId;
+
+            gRef.on('value', snap => {
+                const d = snap.val();
+                if (!d) return;
+
+                document.getElementById('disp-nX').innerText = d.names.X;
+                document.getElementById('disp-nO').innerText = d.names.O;
+                document.getElementById('wX').innerText = d.wins.X;
+                document.getElementById('wO').innerText = d.wins.O;
+                document.body.style.setProperty('--board-color', d.conf.bg);
+                
+                const curCoins = coins[d.conf.cIdx].split('/');
+                const win = check(d.board, d.grid);
+                render(d.board, d.grid, curCoins);
+                
+                document.getElementById('pX-box').classList.toggle('active-turn', d.turn === 'X');
+                document.getElementById('pO-box').classList.toggle('active-turn', d.turn === 'O');
+
+                if (win) {
+                    if (sound && aud) (win === "Draw") ? sndDraw.play() : sndWin.play();
+                    document.getElementById('status').innerText = (win === "Draw") ? "Draw! 🤝" : d.names[win] + " Wins! 🎉";
+                    if (myRole === 'X') {
+                        setTimeout(() => {
+                            let w = d.wins; if (win !== "Draw") w[win]++;
+                            gRef.update({ board: Array(d.grid*d.grid).fill(""), turn: (win !== "Draw") ? win : "X", wins: w });
+                        }, 2500);
+                    }
+                } else {
+                    document.getElementById('status').innerText = d.players < 2 ? "Waiting..." : (d.turn === myRole ? "Your Turn" : d.names[d.turn] + "'s Turn");
+                }
+            });
+        }
+
+        function render(b, s, cs) {
+            const container = document.getElementById('board');
+            container.style.gridTemplateColumns = `repeat(${s}, 1fr)`;
+            container.innerHTML = '';
+            b.forEach((v, i) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.innerText = v === "X" ? cs[0] : (v === "O" ? cs[1] : "");
+                cell.style.fontSize = s === 3 ? '2.5rem' : (s === 5 ? '1.5rem' : '0.8rem');
+                cell.onclick = () => move(i, b, s);
+                container.appendChild(cell);
+            });
+        }
+
+        async function move(i, b, s) {
+            const snap = await gRef.once('value');
+            const d = snap.val();
+            if (d.players === 2 && d.turn === myRole && b[i] === "" && !check(b, s)) {
+                if (sound && aud) sndPop.play();
+                b[i] = myRole;
+                gRef.update({ board: b, turn: myRole === 'X' ? 'O' : 'X' });
+            }
+        }
+
+        function check(b, s) {
+            for (let i = 0; i < s; i++) {
+                let r = true, c = true;
+                for (let j = 1; j < s; j++) {
+                    if (b[i*s] === "" || b[i*s] !== b[i*s+j]) r = false;
+                    if (b[i] === "" || b[i] !== b[i+j*s]) c = false;
+                }
+                if (r) return b[i*s]; if (c) return b[i];
+            }
+            let d1 = true, d2 = true;
+            for (let i = 1; i < s; i++) {
+                if (b[0] === "" || b[0] !== b[i*s+i]) d1 = false;
+                if (b[s-1] === "" || b[s-1] !== b[(i+1)*s-(i+1)]) d2 = false;
+            }
+            if (d1) return b[0]; if (d2) return b[s-1];
+            return b.includes("") ? null : "Draw";
+        }
+
+        colors.forEach(c => {
+            const d = document.createElement('div'); d.className = 'dot'; d.style.background = c;
+            d.onclick = () => window.setBg(c);
+            document.getElementById('color-row').appendChild(d);
+        });
+
+        coins.forEach((c, i) => {
+            const d = document.createElement('div'); d.className = 'opt'; d.innerText = c;
+            d.onclick = () => window.setCoin(i);
+            document.getElementById('coin-row').appendChild(d);
+        });
+
+        window.share = () => {
+            const u = window.location.origin + window.location.pathname + "?room=" + roomId;
+            navigator.clipboard.writeText(u); alert("Copied!");
+        };
+    </script>
+</body>
+</html>
