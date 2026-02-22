@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>XOX Pro Max: Fixed & Polished</title>
+    <title>XOX Pro Max: Final Bug-Fix Build</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -23,8 +23,8 @@
         .p-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
         .win-tag { font-size: 0.7rem; color: #888; }
 
-        .board { display: grid; gap: 8px; width: 100%; aspect-ratio: 1/1; background: var(--board-color, #1a1f29); padding: 10px; border-radius: 20px; box-sizing: border-box; transition: 0.4s; border: 2px solid rgba(255,255,255,0.1); }
-        .cell { aspect-ratio: 1/1; background: rgba(0,0,0,0.3); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); transition: 0.2s; }
+        .board { display: grid; gap: 6px; width: 100%; aspect-ratio: 1/1; background: var(--board-color, #1a1f29); padding: 10px; border-radius: 20px; box-sizing: border-box; transition: 0.4s; border: 2px solid rgba(255,255,255,0.1); }
+        .cell { aspect-ratio: 1/1; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
         .cell:active { background: rgba(255,255,255,0.1); }
 
         .settings-panel { position: absolute; top: 60px; right: 20px; background: #1a1f29; padding: 15px; border-radius: 20px; display: none; z-index: 100; border: 1px solid var(--accent); width: 260px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 70vh; overflow-y: auto; }
@@ -35,7 +35,6 @@
         .btn { width: 100%; padding: 14px; border: none; border-radius: 16px; cursor: pointer; font-weight: bold; margin-top: 8px; }
         .btn-p { background: var(--accent); color: #0b0e14; }
         .btn-s { background: #252b38; color: white; }
-        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -65,15 +64,15 @@
                 <span>🔊 Sound</span>
                 <button onclick="window.toggleSound()" id="s-btn" style="padding:5px 10px; border-radius:5px; border:none; background:var(--accent); font-weight:bold;">ON</button>
             </div>
-            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Board Theme:</p>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Theme:</p>
             <div class="scroll-row" id="color-row"></div>
-            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Coin Set:</p>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Coins:</p>
             <div class="scroll-row" id="coin-row"></div>
-            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Grid Mode:</p>
+            <p style="font-size:0.8rem; margin:15px 0 5px 0;">Mode:</p>
             <div style="display:flex; gap:5px;">
-                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(3)">3x3 (Get 3)</button>
-                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(5)">5x5 (Get 4)</button>
-                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(8)">8x8 (Get 6)</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.7rem;" onclick="window.setGrid(3)">3x3 (3)</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.7rem;" onclick="window.setGrid(5)">5x5 (4)</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.7rem;" onclick="window.setGrid(8)">8x8 (6)</button>
             </div>
         </div>
 
@@ -105,8 +104,8 @@
         const db = firebase.database();
 
         let roomId, myRole, gRef, sound = true, aud = false;
-        const colors = ['#1a1f29', '#2d1b4d', '#1b2d4d', '#1b4d3e', '#4d3a1b', '#4d1b1b', '#000000'];
-        const coins = ['X/O', '❤️/💙', '🔥/❄️', '👑/💎', '🍎/🍊', '👻/💀', '⚽/🏀', '⭐/🌙', '⚡/🌊', '🐱/🐶', '🎮/🕹️', '🎸/🥁', '🚀/🛸', '🍕/🍔', '🍦/🍩', '🦊/🦁', '🐼/🐨', '🌻/🌹', '🌈/☁️', '🌞/🌛'];
+        const colors = ['#1a1f29', '#2d1b4d', '#1b2d4d', '#1b4d3e', '#4d3a1b', '#000000'];
+        const coins = ['X/O', '❤️/💙', '🔥/❄️', '👑/💎', '🍎/🍊', '👻/💀', '⚽/🏀', '⭐/🌙', '⚡/🌊', '🐱/🐶', '🎮/🕹️', '🚀/🛸', '🍕/🍔', '🍦/🍩', '🦊/🦁', '🐼/🐨', '🌻/🌹', '🌈/☁️', '🌞/🌛'];
         
         const sndPop = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
         const sndWin = new Audio('https://actions.google.com/sounds/v1/cartoon/clime_up_the_ladder.ogg');
@@ -128,7 +127,7 @@
         window.hostGame = async () => {
             roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
             myRole = 'X';
-            gRef = db.ref('final_v3/' + roomId);
+            gRef = db.ref('v4_final/' + roomId);
             await gRef.set({
                 grid: 3, board: Array(9).fill(""), turn: "X", players: 1,
                 names: { X: "Host", O: "Joiner" },
@@ -140,7 +139,7 @@
 
         window.joinGame = async () => {
             roomId = document.getElementById('join-input').value.toUpperCase();
-            gRef = db.ref('final_v3/' + roomId);
+            gRef = db.ref('v4_final/' + roomId);
             const snap = await gRef.once('value');
             if (snap.exists() && snap.val().players < 2) {
                 myRole = 'O';
@@ -168,11 +167,8 @@
                 document.getElementById('wO').innerText = d.wins.O;
                 document.getElementById('board').style.setProperty('--board-color', d.conf.bg);
                 
-                if (d.players >= 2) {
-                    document.getElementById('invite-btn').classList.add('hidden');
-                } else {
-                    document.getElementById('invite-btn').classList.remove('hidden');
-                }
+                if (d.players >= 2) document.getElementById('invite-btn').classList.add('hidden');
+                else document.getElementById('invite-btn').classList.remove('hidden');
 
                 const curCoins = coins[d.conf.cIdx].split('/');
                 const win = checkWin(d.board, d.grid);
@@ -221,29 +217,21 @@
             }
         }
 
-        // UPDATED WIN LOGIC FOR 5x5 (4) and 8x8 (6)
+        // RE-FIXED WIN LOGIC WITH BOUNDARY CHECKS
         function checkWin(b, s) {
             let winNeeded = s === 3 ? 3 : (s === 5 ? 4 : 6);
-            
-            for (let i = 0; i < s; i++) {
-                for (let j = 0; j < s; j++) {
-                    let idx = i * s + j;
+            for (let r = 0; r < s; r++) {
+                for (let c = 0; c < s; c++) {
+                    let idx = r * s + c;
                     if (b[idx] === "") continue;
                     let char = b[idx];
-
-                    // Directions: Right, Down, Diagonal-Right, Diagonal-Left
-                    let dirs = [[0,1], [1,0], [1,1], [1,-1]];
-                    
+                    let dirs = [[0,1],[1,0],[1,1],[1,-1]];
                     for (let [dr, dc] of dirs) {
                         let count = 0;
                         for (let k = 0; k < winNeeded; k++) {
-                            let nr = i + dr * k;
-                            let nc = j + dc * k;
-                            if (nr >= 0 && nr < s && nc >= 0 && nc < s && b[nr * s + nc] === char) {
-                                count++;
-                            } else {
-                                break;
-                            }
+                            let nr = r + dr * k, nc = c + dc * k;
+                            if (nr >= 0 && nr < s && nc >= 0 && nc < s && b[nr * s + nc] === char) count++;
+                            else break;
                         }
                         if (count === winNeeded) return char;
                     }
@@ -266,9 +254,9 @@
 
         window.share = () => {
             const u = window.location.origin + window.location.pathname + "?room=" + roomId;
-            navigator.clipboard.writeText(u); alert("Link Copied! Send to friend.");
+            navigator.clipboard.writeText(u); alert("Link Copied!");
         };
-        
+
         window.onload = () => {
             const r = new URLSearchParams(window.location.search).get('room');
             if (r) { document.getElementById('join-input').value = r; window.showJoin(); }
