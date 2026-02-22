@@ -13,24 +13,20 @@
         .screen { display: none; flex-direction: column; align-items: center; width: 95%; max-width: 420px; background: var(--card); padding: 20px; border-radius: 24px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .active { display: flex; }
 
-        /* Header Alignment */
         .game-header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; }
         .room-tag { font-size: 0.8rem; font-weight: bold; color: var(--accent); }
         .settings-icon { font-size: 1.5rem; cursor: pointer; }
 
-        /* Players Bar */
         .players-bar { display: flex; justify-content: space-between; width: 100%; gap: 10px; margin-bottom: 15px; }
         .player-box { background: #252b38; padding: 12px; border-radius: 16px; flex: 1; border: 2px solid transparent; cursor: pointer; text-align: center; }
         .active-turn { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,210,255,0.2); }
         .p-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; }
         .win-tag { font-size: 0.7rem; color: #888; }
 
-        /* Board Fix: Clearer lines for both players */
         .board { display: grid; gap: 8px; width: 100%; aspect-ratio: 1/1; background: var(--board-color, #1a1f29); padding: 10px; border-radius: 20px; box-sizing: border-box; transition: 0.4s; border: 2px solid rgba(255,255,255,0.1); }
         .cell { aspect-ratio: 1/1; background: rgba(0,0,0,0.3); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); transition: 0.2s; }
         .cell:active { background: rgba(255,255,255,0.1); }
 
-        /* Settings Overlay */
         .settings-panel { position: absolute; top: 60px; right: 20px; background: #1a1f29; padding: 15px; border-radius: 20px; display: none; z-index: 100; border: 1px solid var(--accent); width: 260px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); max-height: 70vh; overflow-y: auto; }
         .scroll-row { display: flex; overflow-x: auto; gap: 8px; padding: 10px 0; scrollbar-width: none; }
         .dot { min-width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; }
@@ -40,7 +36,6 @@
         .btn-p { background: var(--accent); color: #0b0e14; }
         .btn-s { background: #252b38; color: white; }
         
-        /* Invite Button Hide Class */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -76,9 +71,9 @@
             <div class="scroll-row" id="coin-row"></div>
             <p style="font-size:0.8rem; margin:15px 0 5px 0;">Grid Mode:</p>
             <div style="display:flex; gap:5px;">
-                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(3)">3x3</button>
-                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(5)">5x5</button>
-                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(8)">8x8</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(3)">3x3 (Get 3)</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(5)">5x5 (Get 4)</button>
+                <button class="btn btn-s" style="padding:8px; font-size:0.75rem;" onclick="window.setGrid(8)">8x8 (Get 6)</button>
             </div>
         </div>
 
@@ -173,7 +168,6 @@
                 document.getElementById('wO').innerText = d.wins.O;
                 document.getElementById('board').style.setProperty('--board-color', d.conf.bg);
                 
-                // HIDE INVITE BUTTON IF 2 PLAYERS ARE IN
                 if (d.players >= 2) {
                     document.getElementById('invite-btn').classList.add('hidden');
                 } else {
@@ -181,7 +175,7 @@
                 }
 
                 const curCoins = coins[d.conf.cIdx].split('/');
-                const win = check(d.board, d.grid);
+                const win = checkWin(d.board, d.grid);
                 render(d.board, d.grid, curCoins);
                 
                 document.getElementById('pX-box').classList.toggle('active-turn', d.turn === 'X');
@@ -197,7 +191,8 @@
                         }, 2500);
                     }
                 } else {
-                    document.getElementById('status').innerText = d.players < 2 ? "Waiting for Friend..." : (d.turn === myRole ? "Your Turn" : d.names[d.turn] + "'s Turn");
+                    let target = d.grid === 3 ? 3 : (d.grid === 5 ? 4 : 6);
+                    document.getElementById('status').innerText = d.players < 2 ? "Waiting..." : (d.turn === myRole ? `Your Turn (Get ${target})` : `${d.names[d.turn]}'s Turn`);
                 }
             });
         }
@@ -219,28 +214,41 @@
         async function move(i, b, s) {
             const snap = await gRef.once('value');
             const d = snap.val();
-            if (d.players === 2 && d.turn === myRole && b[i] === "" && !check(b, s)) {
+            if (d.players === 2 && d.turn === myRole && b[i] === "" && !checkWin(b, s)) {
                 if (sound && aud) sndPop.play();
                 b[i] = myRole;
                 gRef.update({ board: b, turn: myRole === 'X' ? 'O' : 'X' });
             }
         }
 
-        function check(b, s) {
+        // UPDATED WIN LOGIC FOR 5x5 (4) and 8x8 (6)
+        function checkWin(b, s) {
+            let winNeeded = s === 3 ? 3 : (s === 5 ? 4 : 6);
+            
             for (let i = 0; i < s; i++) {
-                let r = true, c = true;
-                for (let j = 1; j < s; j++) {
-                    if (b[i*s] === "" || b[i*s] !== b[i*s+j]) r = false;
-                    if (b[i] === "" || b[i] !== b[i+j*s]) c = false;
+                for (let j = 0; j < s; j++) {
+                    let idx = i * s + j;
+                    if (b[idx] === "") continue;
+                    let char = b[idx];
+
+                    // Directions: Right, Down, Diagonal-Right, Diagonal-Left
+                    let dirs = [[0,1], [1,0], [1,1], [1,-1]];
+                    
+                    for (let [dr, dc] of dirs) {
+                        let count = 0;
+                        for (let k = 0; k < winNeeded; k++) {
+                            let nr = i + dr * k;
+                            let nc = j + dc * k;
+                            if (nr >= 0 && nr < s && nc >= 0 && nc < s && b[nr * s + nc] === char) {
+                                count++;
+                            } else {
+                                break;
+                            }
+                        }
+                        if (count === winNeeded) return char;
+                    }
                 }
-                if (r) return b[i*s]; if (c) return b[i];
             }
-            let d1 = true, d2 = true;
-            for (let i = 1; i < s; i++) {
-                if (b[0] === "" || b[0] !== b[i*s+i]) d1 = false;
-                if (b[s-1] === "" || b[s-1] !== b[(i+1)*s-(i+1)]) d2 = false;
-            }
-            if (d1) return b[0]; if (d2) return b[s-1];
             return b.includes("") ? null : "Draw";
         }
 
