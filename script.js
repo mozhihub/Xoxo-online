@@ -1,12 +1,12 @@
 // UNGA DATABASE URL-AH INGA UPDATE PANNUNGA
 const firebaseConfig = {
-    apiKey: "AIzaSyBLyf_dz6xPC9wdthZSVtpatkc8JgFhE4Q",
-    authDomain: "chatbox-chats.firebaseapp.com",
-    projectId: "chatbox-chats",
-    databaseURL: "https://chatbox-chats-default-rtdb.firebaseio.com", // Idhu correct-ah irukkanu paarunga
-    storageBucket: "chatbox-chats.appspot.com",
-    messagingSenderId: "10200860576",
-    appId: "1:10200860576:web:262315d86f6d1732ddc6c5"
+    apiKey: "AIzaSyBb0upYoLF4_isVBfJUAMOEflMCgl5_5aE",
+    authDomain: "game-3a2e9.firebaseapp.com",
+    projectId: "game-3a2e9",
+    databaseURL: "https://game-3a2e9-default-rtdb.asia-southeast1.firebasedatabase.app", // Idhu correct-ah irukkanu paarunga
+    storageBucket: "game-3a2e9.firebasestorage.app",
+    messagingSenderId: "107429496573",
+    appId: "1:107429496573:web:d713c43d7acf8a02232094"
 };
 
 firebase.initializeApp(firebaseConfig);
