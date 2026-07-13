@@ -1,12 +1,12 @@
 // UNGA DATABASE URL-AH INGA UPDATE PANNUNGA
 const firebaseConfig = {
-    apiKey: "AIzaSyBb0upYoLF4_isVBfJUAMOEflMCgl5_5aE",
-    authDomain: "game-3a2e9.firebaseapp.com",
-    projectId: "game-3a2e9",
-    databaseURL: "https://game-3a2e9-default-rtdb.asia-southeast1.firebasedatabase.app", // Idhu correct-ah irukkanu paarunga
-    storageBucket: "game-3a2e9.firebasestorage.app",
-    messagingSenderId: "107429496573",
-    appId: "1:107429496573:web:d713c43d7acf8a02232094"
+  apiKey: "AIzaSyBb0upYoLF4_isVBfJUAMOEflMCgl5_5aE",
+  authDomain: "game-3a2e9.firebaseapp.com",
+  databaseURL: "https://game-3a2e9-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "game-3a2e9",
+  storageBucket: "game-3a2e9.firebasestorage.app",
+  messagingSenderId: "107429496573",
+  appId: "1:107429496573:web:d713c43d7acf8a02232094"
 };
 
 
