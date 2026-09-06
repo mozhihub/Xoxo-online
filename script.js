@@ -1,14 +1,13 @@
 // UNGA DATABASE URL-AH INGA UPDATE PANNUNGA
-const firebaseConfig = {
-  apiKey: "AIzaSyBb0upYoLF4_isVBfJUAMOEflMCgl5_5aE",
-  authDomain: "game-3a2e9.firebaseapp.com",
-  databaseURL: "https://game-3a2e9-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "game-3a2e9",
-  storageBucket: "game-3a2e9.firebasestorage.app",
-  messagingSenderId: "107429496573",
-  appId: "1:107429496573:web:d713c43d7acf8a02232094"
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCaALqxdtEPCNxg5XPPG81T9853gOPO4qY",
+    authDomain: "server-41203.firebaseapp.com",
+    databaseURL: "https://server-41203-default-rtdb.firebaseio.com",
+    projectId: "server-41203",
+    storageBucket: "server-41203.firebasestorage.app",
+    messagingSenderId: "26278139327",
+    appId: "1:26278139327:web:db44a7e2d8d42d690abd0a"
 };
-
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
